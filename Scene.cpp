@@ -173,7 +173,18 @@ Matrix4 Scene::getPerspectiveProjection(Camera *camera) {
     return Matrix4(res);
 }
 
+Matrix4 Scene::getViewportMatrix(Camera *camera) {
+	double nx = camera->horRes;
+	double ny = camera->verRes;
+    double res[4][4] = {
+        {nx / 2, 0, 0, (nx - 1) / 2},
+        {0, ny / 2, 0, (ny - 1) / 2},
+        {0, 0, 0.5, 0.5},
+        {0, 0, 0, 1}
+    };
 
+    return Matrix4(res);
+}
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	// TODO: Implement this function.
