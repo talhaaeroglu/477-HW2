@@ -24,6 +24,30 @@ using namespace std;
 	Transformations, clipping, culling, rasterization are done here.
 	You may define helper functions.
 */
+Matrix4 getModelingTransform(Camera * camera, Mesh & mesh, const vector<Translation*>& translations,
+        const vector<Rotation*>& rotations, const vector<Scaling*>& scalings) {
+    Matrix4 M_model = getIdentityMatrix();
+    for (int i = 0; i < mesh.numberOfTransformations; ++i) {
+        Matrix4 transMatrix;
+        switch (mesh.transformationTypes[i]) {
+            case 't':
+                transMatrix = getTranslationMatrix(translations[mesh.transformationIds[i]-1]);
+                break;
+            case 's':
+                transMatrix = getScalingMatrix(scalings[mesh.transformationIds[i]-1]);
+                break;
+            case 'r':
+                transMatrix = getRotationMatrix(rotations[mesh.transformationIds[i]-1]);
+                break;
+            default:
+                fprintf(stderr, "Invalid Transformation Type!\n");
+        }
+        M_model = multiplyMatrixWithMatrix(transMatrix, M_model);
+    }
+    return M_model;
+}
+
+
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	// TODO: Implement this function.
