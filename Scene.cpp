@@ -20,32 +20,98 @@
 using namespace tinyxml2;
 using namespace std;
 
+Matrix4 Scene::getTranslationMatrix(Translation * t) {
+	double ret[4][4] =  {{1.,0.,0.,t->tx},
+						 {0.,1.,0.,t->ty},
+						 {0.,0.,1,t->tz},
+						 {0.,0.,0.,1.}};
+    return Matrix4(ret);
+}
+
+Matrix4 Scene::getScalingMatrix(Scaling * s) {
+	double ret[4][4] =  {{s->sx,0,0,0},
+						 {0,s->sy,0,0},
+						 {0,0,s->sz,0},
+						 {0,0,0,1}};
+    return Matrix4(ret);
+}
+Matrix4 Scene::getRotationMatrix(Rotation * r) {
+    // Construct an orthonormal basis (ONB) for the given axis of rotation
+    Vec3 u = Vec3(r->ux, r->uy, r->uz, -1), v, w;
+    double minComp = std::min(std::min(abs(r->ux), abs(r->uy)), abs(r->uz));
+    if (minComp == abs(r->ux))
+        v = Vec3(0, -1 * r->uz, r->uy, -1);
+    else if (minComp == abs(r->uy))
+        v = Vec3(-1 * r->uz, 0, r->ux, -1);
+    else if (minComp == abs(r->uz))
+        v = Vec3(-1 * r->uy, r->ux, 0, -1);
+    w = crossProductVec3(u, v);
+    // Normalize v and w
+    v = normalizeVec3(v);
+    w = normalizeVec3(w);
+
+    // Construct matrices to align the given axis of rotation with the X-axis
+    double onbMatrix[4][4] = {{u.x,u.y,u.z,0},
+                              {v.x,v.y,v.z,0},
+                              {w.x,w.y,w.z,0},
+                              {0,0,0,1}};
+    double onbMatrixInverse[4][4] = {{u.x,v.x,w.x,0},
+                                     {u.y,v.y,w.y,0},
+                                     {u.z,v.z,w.z,0},
+                                     {0,0,0,1}};
+
+    // Construct the rotation matrix for a rotation around the X-axis
+    double rotationMatrix[4][4] = {{1,0,0,0},
+                                   {0,cos(r->angle * M_PI/180),(-1) * sin(r->angle * M_PI/180),0},
+                                   {0,sin(r->angle * M_PI/180),cos(r->angle * M_PI/180),0},
+                                   {0,0,0,1}};
+
+    // Multiply the rotation matrix with the ONB matrices to obtain the final rotation matrix
+    Matrix4 rot1 = multiplyMatrixWithMatrix(rotationMatrix, onbMatrix);
+    Matrix4 rotRes = multiplyMatrixWithMatrix(onbMatrixInverse, rot1);
+    return rotRes;
+}
+
+
 /*
 	Transformations, clipping, culling, rasterization are done here.
 	You may define helper functions.
 */
-Matrix4 getModelingTransform(Camera * camera, Mesh & mesh, const vector<Translation*>& translations,
-        const vector<Rotation*>& rotations, const vector<Scaling*>& scalings) {
+Matrix4 Scene::getModelingTransform(Mesh & mesh){
+    // Initialize the modeling transformation to the identity matrix
     Matrix4 M_model = getIdentityMatrix();
+
+    // Iterate over the transformations specified by the mesh object
     for (int i = 0; i < mesh.numberOfTransformations; ++i) {
         Matrix4 transMatrix;
+
+        // Determine the type of transformation
         switch (mesh.transformationTypes[i]) {
             case 't':
+                // Translation: fetch the translation vector from the translations array
                 transMatrix = getTranslationMatrix(translations[mesh.transformationIds[i]-1]);
                 break;
             case 's':
-                transMatrix = getScalingMatrix(scalings[mesh.transformationIds[i]-1]);
+                // Scaling: fetch the scaling vector from the scalings array
+                transMatrix = getScalingMatrix(this -> scalings[mesh.transformationIds[i]-1]);
                 break;
             case 'r':
+                // Rotation: fetch the rotation vector from the rotations array
                 transMatrix = getRotationMatrix(rotations[mesh.transformationIds[i]-1]);
                 break;
             default:
-                fprintf(stderr, "Invalid Transformation Type!\n");
+                // Invalid transformation
+                cout << "Invalid Transofrmation" << endl;
         }
+
+        // Apply the transformation to the running total
         M_model = multiplyMatrixWithMatrix(transMatrix, M_model);
     }
+
+    // Return the final modeling transformation
     return M_model;
 }
+
 
 
 void Scene::forwardRenderingPipeline(Camera *camera)
