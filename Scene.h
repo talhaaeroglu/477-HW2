@@ -43,9 +43,9 @@ public:
 	void writeImageToPPMFile(Camera* camera);
 	void convertPPMToPNG(string ppmFileName, int osType);
 	Matrix4 getModelingTransform(Mesh & mesh);
-	Matrix4 Scene::getRotationMatrix(Rotation * r);
-	Matrix4 Scene::getScalingMatrix(Scaling * s);
-	Matrix4 Scene::getTranslationMatrix(Translation * t);
+	Matrix4 getRotationMatrix(Rotation * r);
+	Matrix4 getScalingMatrix(Scaling * s);
+	Matrix4 getTranslationMatrix(Translation * t);
 };
 
 #endif

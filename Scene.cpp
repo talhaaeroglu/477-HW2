@@ -61,6 +61,7 @@ Matrix4 Scene::getRotationMatrix(Rotation * r) {
                               {v.x,v.y,v.z,0},
                               {w.x,w.y,w.z,0},
                               {0,0,0,1}};
+
     double onbMatrixInverse[4][4] = {{u.x,v.x,w.x,0},
                                      {u.y,v.y,w.y,0},
                                      {u.z,v.z,w.z,0},
@@ -83,9 +84,10 @@ Matrix4 Scene::getRotationMatrix(Rotation * r) {
 	Transformations, clipping, culling, rasterization are done here.
 	You may define helper functions.
 */
+
 Matrix4 Scene::getModelingTransform(Mesh & mesh){
     // Initialize the modeling transformation to the identity matrix
-    Matrix4 M_model = getIdentityMatrix();
+    Matrix4 meshModel = getIdentityMatrix();
 
     // Iterate over the transformations specified by the mesh object
     for (int i = 0; i < mesh.numberOfTransformations; ++i) {
@@ -100,26 +102,29 @@ Matrix4 Scene::getModelingTransform(Mesh & mesh){
                 // Translation: fetch the translation vector from the translations array
                 transMatrix = getTranslationMatrix(translations[transformationId]);
                 break;
+				
             case 's':
                 // Scaling: fetch the scaling vector from the scalings array
                 transMatrix = getScalingMatrix(scalings[transformationId]);
                 break;
+
             case 'r':
                 // Rotation: fetch the rotation vector from the rotations array
                 transMatrix = getRotationMatrix(rotations[transformationId]);
                 break;
+
             default:
                 // Invalid transformation
-                cout << "Invalid Transofrmation" << endl;
+                return NULL;
 				break;
         }
 
         // Apply the transformation to the running total
-        M_model = multiplyMatrixWithMatrix(transMatrix, M_model);
+        meshModel = multiplyMatrixWithMatrix(transMatrix, meshModel);
     }
 
     // Return the final modeling transformation
-    return M_model;
+    return meshModel;
 }
 
 
