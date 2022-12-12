@@ -114,17 +114,14 @@ Matrix4 Scene::getModelingTransform(Mesh & mesh){
         // Determine the type of transformation
         switch (mesh.transformationTypes[i]) {
             case 't':
-                // Translation: fetch the translation vector from the translations array
                 transMatrix = getTranslationMatrix(translations[transformationId]);
                 break;
 				
             case 's':
-                // Scaling: fetch the scaling vector from the scalings array
                 transMatrix = getScalingMatrix(scalings[transformationId]);
                 break;
 
             case 'r':
-                // Rotation: fetch the rotation vector from the rotations array
                 transMatrix = getRotationMatrix(rotations[transformationId]);
                 break;
 
@@ -142,6 +139,39 @@ Matrix4 Scene::getModelingTransform(Mesh & mesh){
     return meshModel;
 }
 
+Matrix4 Scene::getOrtographicProjection(Camera *camera){
+    double far = camera->far;
+    double near = camera->near;
+    double top = camera->top;
+	double bottom = camera->bottom;
+	double left = camera->left;
+    double right = camera->right;
+
+    double res[4][4] = {
+        {2 / (right - left), 0, 0, -(right + left) / (right - left)},
+        {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
+        {0, 0, -2 / (far - near), -(far + near) / (far - near)},
+        {0, 0, 0, 1}
+    };
+
+    return Matrix4(res);
+}
+
+Matrix4 Scene::getPerspectiveProjection(Camera *camera) {
+    double far = camera->far;
+    double near = camera->near;
+    double top = camera->top;
+	double bottom = camera->bottom;
+	double left = camera->left;
+    double right = camera->right;
+
+    double res[4][4] = {{2 * near / (right - left ), 0, (right + left) / (right - left),  0},
+                           {0, 2 * near / (top - bottom), (top + bottom) / (top - bottom), 0},
+                           {0, 0, -(far + near)/ (far - near), -2 * far * near / (far - near)},
+                           {0, 0, -1, 0}};
+
+    return Matrix4(res);
+}
 
 
 void Scene::forwardRenderingPipeline(Camera *camera)

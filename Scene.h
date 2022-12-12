@@ -46,6 +46,8 @@ public:
 	Matrix4 getRotationMatrix(Rotation * r);
 	Matrix4 getScalingMatrix(Scaling * s);
 	Matrix4 getTranslationMatrix(Translation * t);
+	Matrix4 getOrtographicProjection(Camera *camera);
+	Matrix4 getPerspectiveProjection(Camera *camera);
 };
 
 #endif
