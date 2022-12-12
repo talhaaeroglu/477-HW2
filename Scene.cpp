@@ -4,6 +4,7 @@
 #include <cstring>
 #include <fstream>
 #include <cmath>
+#include <map>
 
 #include "Scene.h"
 #include "Camera.h"
@@ -38,14 +39,19 @@ Matrix4 Scene::getScalingMatrix(Scaling * s) {
 Matrix4 Scene::getRotationMatrix(Rotation * r) {
     // Construct an orthonormal basis (ONB) for the given axis of rotation
     Vec3 u = Vec3(r->ux, r->uy, r->uz, -1), v, w;
-    double minComp = std::min(std::min(abs(r->ux), abs(r->uy)), abs(r->uz));
-    if (minComp == abs(r->ux))
-        v = Vec3(0, -1 * r->uz, r->uy, -1);
-    else if (minComp == abs(r->uy))
-        v = Vec3(-1 * r->uz, 0, r->ux, -1);
-    else if (minComp == abs(r->uz))
-        v = Vec3(-1 * r->uy, r->ux, 0, -1);
-    w = crossProductVec3(u, v);
+
+	// Compute the minimum component of the vector r
+	double minVal = min(std::min(abs(r->ux), abs(r->uy)), abs(r->uz));
+	
+	// Select the corresponding Vec3 value based on the minimum component
+	map<double, Vec3> minMap = {
+		{abs(r->ux), Vec3(0, -1 * r->uz, r->uy, -1)},
+		{abs(r->uy), Vec3(-1 * r->uz, 0, r->ux, -1)},
+		{abs(r->uz), Vec3(-1 * r->uy, r->ux, 0, -1)}};
+
+	v = minMap[minVal];
+	w = crossProductVec3(u, v);
+
     // Normalize v and w
     v = normalizeVec3(v);
     w = normalizeVec3(w);
@@ -66,10 +72,10 @@ Matrix4 Scene::getRotationMatrix(Rotation * r) {
                                    {0,sin(r->angle * M_PI/180),cos(r->angle * M_PI/180),0},
                                    {0,0,0,1}};
 
-    // Multiply the rotation matrix with the ONB matrices to obtain the final rotation matrix
-    Matrix4 rot1 = multiplyMatrixWithMatrix(rotationMatrix, onbMatrix);
-    Matrix4 rotRes = multiplyMatrixWithMatrix(onbMatrixInverse, rot1);
-    return rotRes;
+    // Multiply the rotation matrix with the ONB matrices to obtain the final result
+    Matrix4 res = multiplyMatrixWithMatrix(rotationMatrix, onbMatrix);
+    res = multiplyMatrixWithMatrix(onbMatrixInverse, res);
+    return res;
 }
 
 
@@ -85,23 +91,27 @@ Matrix4 Scene::getModelingTransform(Mesh & mesh){
     for (int i = 0; i < mesh.numberOfTransformations; ++i) {
         Matrix4 transMatrix;
 
+		// Adjust the transformation index
+		int transformationId = mesh.transformationIds[i] - 1;
+
         // Determine the type of transformation
         switch (mesh.transformationTypes[i]) {
             case 't':
                 // Translation: fetch the translation vector from the translations array
-                transMatrix = getTranslationMatrix(translations[mesh.transformationIds[i]-1]);
+                transMatrix = getTranslationMatrix(translations[transformationId]);
                 break;
             case 's':
                 // Scaling: fetch the scaling vector from the scalings array
-                transMatrix = getScalingMatrix(this -> scalings[mesh.transformationIds[i]-1]);
+                transMatrix = getScalingMatrix(scalings[transformationId]);
                 break;
             case 'r':
                 // Rotation: fetch the rotation vector from the rotations array
-                transMatrix = getRotationMatrix(rotations[mesh.transformationIds[i]-1]);
+                transMatrix = getRotationMatrix(rotations[transformationId]);
                 break;
             default:
                 // Invalid transformation
                 cout << "Invalid Transofrmation" << endl;
+				break;
         }
 
         // Apply the transformation to the running total
