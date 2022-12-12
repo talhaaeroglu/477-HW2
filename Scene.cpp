@@ -78,7 +78,22 @@ Matrix4 Scene::getRotationMatrix(Rotation * r) {
     res = multiplyMatrixWithMatrix(onbMatrixInverse, res);
     return res;
 }
-
+Matrix4 getCameraTransformation(Camera* camera){
+    // Create a translation matrix that translates e to the world origin (0,0,0).
+    double translation_matrix[4][4] = {{1, 0, 0, -(camera->pos.x)},
+                                       {0, 1, 0, -(camera->pos.y)},
+                                       {0, 0, 1, -(camera->pos.z)},
+                                       {0, 0, 0, 1}};
+                                       
+    // Create a rotation matrix that aligns uvw with xyz.
+    double rotation_matrix[4][4] = {{camera->u.x, camera->u.y, camera->u.z, 0},
+                                    {camera->v.x, camera->v.y, camera->v.z, 0},
+                                    {camera->w.x, camera->w.y, camera->w.z, 0},
+                                    {0, 0, 0, 1}};
+                                    
+    // Multiply the rotation and translation matrices to get the camera's transformation matrix.
+    return multiplyMatrixWithMatrix(rotation_matrix, translation_matrix);
+}
 
 /*
 	Transformations, clipping, culling, rasterization are done here.
