@@ -48,6 +48,7 @@ public:
 	Matrix4 getTranslationMatrix(Translation * t);
 	Matrix4 getOrtographicProjection(Camera *camera);
 	Matrix4 getPerspectiveProjection(Camera *camera);
+	Matrix4 getViewportMatrix(Camera *camera);
 };
 
 #endif
