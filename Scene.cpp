@@ -142,7 +142,7 @@ bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
 	//double x_max = 1, y_max = 1, z_max = 1;
 	Color color_vec0 = *colorsOfVertices[vec0.colorId-1];
 	Color color_vec1 = *colorsOfVertices[vec1.colorId-1];
-	Color color_diff = subtractColor(color_vec1, color_vec0);
+	Color color_diff = color_vec1- color_vec0;
 	
 	Vec3 d = subtractVec3(vec1, vec0);
 	Vec3 minVec(-1., -1., -1., -1.);
@@ -160,19 +160,15 @@ bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
         					visible = true;
 							if(t_l < 1){
 								vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l));
-								color_vec1 = color_vec0 + multiplyColorWithScalar(color_diff, t_l)
+								color_vec1 = color_vec0 + color_diff * t_l;
 							}							
 							if(t_e > 0){
-								//vec0.x = vec0.x + d_x * t_l; 
-								//vec0.y = vec0.y + d_y * t_l;  Must be t_e??	
-								//vec0.z = vec0.z + d_z * t_l;
-
 								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
-
+								color_vec0 = color_vec1 + color_diff * t_e;
 							}
 						}
-		
-	return isVisible;
+
+	return visible;
 
 
 }
@@ -418,15 +414,17 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			//wireframe
 			if(!mesh->type){
 
-				if(clipping())
-					//raster				
-				if(clipping())
-					//raster
-				if(clipping())
-					//raster
+				// if(clipping())
+				// 	//raster				
+				// if(clipping())
+				// 	//raster
+				// if(clipping())
+				// 	//raster
 			} 
 
-			else
+			else{
+				
+			}
 				//rastertri
 
 		}
