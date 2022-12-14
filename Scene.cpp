@@ -157,6 +157,17 @@ bool clipping(Vec3 vec0, Vec3 vec1){
 
 }
 
+bool backFaceCulling(Vec3& v1, Vec3& v2, Vec3& v3){
+	Vec3 v3_v1 = subtractVec3(v3, v1);
+	Vec3 v2_v1 = subtractVec3(v2, v1);
+
+	Vec3 normal = normalizeVec3(crossProductVec3(v3_v1, v2_v1));
+	if(dotProductVec3(normal, normalizeVec3(v2)) < 0) 
+		return true;
+	else 
+		return false;
+
+}
 
 /*
 	Transformations, clipping, culling, rasterization are done here.
