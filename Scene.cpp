@@ -96,63 +96,62 @@ Matrix4 getCameraTransformation(Camera* camera){
 }
 
 // Visible Function of Liang-Barsky Algorithm 
-bool visible(double den, double num, double *t_e, double *t_l) {
-    double t;
-    if (den < 0) {
-        t = num / den;
-        if (t > *t_l)
-            return false;
-        if (t > *t_e)
-            *t_e = t;
-    } else if (den > 0) {
-        t = num / den;
-        if (t < *t_e)
-            return false;
-        if (t < *t_l)
-            *t_l = t;
+bool isVisible(double den, double num, double &t_e, double &t_l) {
+    if (den > 0) {
+        double t = num / den;
 
-    } else if (num < 0) {
-        return false;
-    }
-    return true;
+        if (t > t_l) 
+			return false;
+        else if (t > t_e) 
+			t_e = t;
+    } else if (den < 0) {
+        double t = num / den;
+
+        if (t < t_e) 
+			return false;
+        else if (t < t_l) 
+			t_l = t;
+    } 
+
+	return num <= 0;
 }
 
 //Liang-Barsky Algorithm
 bool clipping(Vec3 vec0, Vec3 vec1){
-	double d_x = vec1.x - vec0.x, 
-		   d_y = vec1.y-vec0.y, 
-		   d_z = vec1.z-vec0.z;
-	double t_e = 0, 
-	       t_l = 1;
-	double x_min = -1, y_min = -1, z_min = -1;
-	double x_max = 1, y_max = 1, z_max = 1;
-	bool isVisible = false;
+	//double d_x = vec1.x - vec0.x, d_y = vec1.y-vec0.y, d_z = vec1.z-vec0.z;
+	//double x_min = -1, y_min = -1, z_min = -1;
+	//double x_max = 1, y_max = 1, z_max = 1;
 
-	if (visible(d_x, x_min - vec0.x, &t_e, &t_l)) { //left
-    	if (visible(-d_x, vec0.x - x_max, &t_e, &t_l)) {//right
-    		if (visible(d_y, y_min - vec0.y, &t_e, &t_l)) {//bottom
-    			if (visible(-d_y, vec0.y - y_max, &t_e, &t_l)) {//top
-    				if (visible(d_z, z_min - vec0.z, &t_e, &t_l)) {//front
-    					if (visible(-d_z, vec0.z - z_max, &t_e, &t_l)) {//back
-        					isVisible = true;
+	Vec3 d = subtractVec3(vec1, vec0);
+	Vec3 minVec(-1., -1., -1., -1.);
+	Vec3 maxVec(1., 1., 1., -1.);
+	double t_e = 0, t_l = 1;
+
+	bool visible = false;
+
+	if (isVisible(d.x, minVec.x - vec0.x, t_e, t_l))  //left
+    	if (isVisible(-d.x, vec0.x - maxVec.x, t_e, t_l)) //right
+    		if (isVisible(d.y, minVec.y - vec0.y, t_e, t_l)) //bottom
+    			if (isVisible(-d.y, vec0.y - maxVec.y, t_e, t_l)) //top
+    				if (isVisible(d.z, minVec.z - vec0.z, t_e, t_l)) //front
+    					if (isVisible(-d.z, vec0.z - maxVec.z, t_e, t_l)) {//back
+        					visible = true;
 							if(t_l < 1){
-								vec1.x = vec0.x + d_x * t_l;
-								vec1.y = vec0.y + d_y * t_l;
-								vec1.z = vec0.z + d_z * t_l;
+								vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l) );
+								//vec1.x = vec0.x + d_x * t_l;
+								//vec1.y = vec0.y + d_y * t_l;
+								//vec1.z = vec0.z + d_z * t_l;
 							}							
 							if(t_e > 0){
-								vec0.x = vec0.x + d_x * t_l;
-								vec0.y = vec0.y + d_y * t_l;
-								vec0.z = vec0.z + d_z * t_l;
-							}
-							
+								//vec0.x = vec0.x + d_x * t_l; 
+								//vec0.y = vec0.y + d_y * t_l;  Must be t_e??	
+								//vec0.z = vec0.z + d_z * t_l;
 
+								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
+
+							}
 						}
-					}	
-				}	
-			}	
-		}
-	}
+		
 	return isVisible;
 
 
@@ -248,6 +247,8 @@ Matrix4 Scene::getViewportMatrix(Camera *camera) {
 
     return Matrix4(res);
 }
+
+
 
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
