@@ -137,9 +137,7 @@ bool isVisible(double den, double num, double &t_e, double &t_l) {
 
 //Liang-Barsky Algorithm
 bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
-	//double d_x = vec1.x - vec0.x, d_y = vec1.y-vec0.y, d_z = vec1.z-vec0.z;
-	//double x_min = -1, y_min = -1, z_min = -1;
-	//double x_max = 1, y_max = 1, z_max = 1;
+
 	Color color_vec0 = *colorsOfVertices[vec0.colorId-1];
 	Color color_vec1 = *colorsOfVertices[vec1.colorId-1];
 	Color color_diff = color_vec1- color_vec0;
@@ -414,19 +412,33 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			//wireframe
 			if(!mesh->type){
 
-				// if(clipping())
-				// 	//raster				
-				// if(clipping())
-				// 	//raster
-				// if(clipping())
-				// 	//raster
+				Vec3 vertex11 = convertVec3(vertex1), vertex111 = convertVec3(vertex1);
+				Vec3 vertex22 = convertVec3(vertex2), vertex222 = convertVec3(vertex1);
+				Vec3 vertex33 = convertVec3(vertex3), vertex333 = convertVec3(vertex3);
+
+				if(clipping(vertex11, vertex22)){
+					Vec4 ver1(vertex11.x, vertex11.y, vertex11.z, 1, vertex11.colorId);
+					Vec4 ver2(vertex22.x, vertex22.y, vertex22.z, 1, vertex22.colorId);
+					midpoint(ver1, ver2);
+				}
+					//raster				
+				if(clipping(vertex111, vertex33)){
+					Vec4 ver11(vertex111.x, vertex111.y, vertex111.z, 1, vertex111.colorId);
+					Vec4 ver3(vertex33.x, vertex33.y, vertex33.z, 1, vertex33.colorId);
+					midpoint(ver11, ver3);
+				}
+					
+				if(clipping(vertex222, vertex333)){
+					Vec4 ver22(vertex222.x, vertex222.y, vertex222.z, 1, vertex222.colorId);
+					Vec4 ver33(vertex333.x, vertex333.y, vertex333.z, 1, vertex333.colorId);
+					midpoint(ver22, ver33);
+				}
+
 			} 
 
 			else{
-				
-			}
 				//rastertri
-
+			}
 		}
 	}
 }
