@@ -95,6 +95,70 @@ Matrix4 getCameraTransformation(Camera* camera){
     return multiplyMatrixWithMatrix(rotation_matrix, translation_matrix);
 }
 
+// Visible Function of Liang-Barsky Algorithm 
+bool visible(double den, double num, double *t_e, double *t_l) {
+    double t;
+    if (den < 0) {
+        t = num / den;
+        if (t > *t_l)
+            return false;
+        if (t > *t_e)
+            *t_e = t;
+    } else if (den > 0) {
+        t = num / den;
+        if (t < *t_e)
+            return false;
+        if (t < *t_l)
+            *t_l = t;
+
+    } else if (num < 0) {
+        return false;
+    }
+    return true;
+}
+
+//Liang-Barsky Algorithm
+bool clipping(Vec3 vec0, Vec3 vec1){
+	double d_x = vec1.x - vec0.x, 
+		   d_y = vec1.y-vec0.y, 
+		   d_z = vec1.z-vec0.z;
+	double t_e = 0, 
+	       t_l = 1;
+	double x_min = -1, y_min = -1, z_min = -1;
+	double x_max = 1, y_max = 1, z_max = 1;
+	bool isVisible = false;
+
+	if (visible(d_x, x_min - vec0.x, &t_e, &t_l)) { //left
+    	if (visible(-d_x, vec0.x - x_max, &t_e, &t_l)) {//right
+    		if (visible(d_y, y_min - vec0.y, &t_e, &t_l)) {//bottom
+    			if (visible(-d_y, vec0.y - y_max, &t_e, &t_l)) {//top
+    				if (visible(d_z, z_min - vec0.z, &t_e, &t_l)) {//front
+    					if (visible(-d_z, vec0.z - z_max, &t_e, &t_l)) {//back
+        					isVisible = true;
+							if(t_l < 1){
+								vec1.x = vec0.x + d_x * t_l;
+								vec1.y = vec0.y + d_y * t_l;
+								vec1.z = vec0.z + d_z * t_l;
+							}							
+							if(t_e > 0){
+								vec0.x = vec0.x + d_x * t_l;
+								vec0.y = vec0.y + d_y * t_l;
+								vec0.z = vec0.z + d_z * t_l;
+							}
+							
+
+						}
+					}	
+				}	
+			}	
+		}
+	}
+	return isVisible;
+
+
+}
+
+
 /*
 	Transformations, clipping, culling, rasterization are done here.
 	You may define helper functions.
