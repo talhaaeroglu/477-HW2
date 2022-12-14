@@ -151,8 +151,7 @@ Matrix4 Scene::getOrtographicProjection(Camera *camera){
         {2 / (right - left), 0, 0, -(right + left) / (right - left)},
         {0, 2 / (top - bottom), 0, -(top + bottom) / (top - bottom)},
         {0, 0, -2 / (far - near), -(far + near) / (far - near)},
-        {0, 0, 0, 1}
-    };
+        {0, 0, 0, 1}};
 
     return Matrix4(res);
 }
@@ -176,15 +175,16 @@ Matrix4 Scene::getPerspectiveProjection(Camera *camera) {
 Matrix4 Scene::getViewportMatrix(Camera *camera) {
 	double nx = camera->horRes;
 	double ny = camera->verRes;
+
     double res[4][4] = {
         {nx / 2, 0, 0, (nx - 1) / 2},
         {0, ny / 2, 0, (ny - 1) / 2},
         {0, 0, 0.5, 0.5},
-        {0, 0, 0, 1}
-    };
+        {0, 0, 0, 1}};
 
     return Matrix4(res);
 }
+
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	// TODO: Implement this function.
@@ -518,5 +518,5 @@ void Scene::convertPPMToPNG(string ppmFileName, int osType)
 	// default action - don't do conversion
 	else
 	{
-	}
+
 }
