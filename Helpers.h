@@ -7,6 +7,7 @@
 #include "Matrix4.h"
 #include "Vec3.h"
 #include "Vec4.h"
+#include "Color.h"
 
 /*
  * Calculate cross product of vec3 a, vec3 b and return resulting vec3.
@@ -74,4 +75,13 @@ Matrix4 multiplyMatrixWithMatrix(Matrix4 m1, Matrix4 m2);
  */
 Vec4 multiplyMatrixWithVec4(Matrix4 m, Vec4 v);
 
+/*
+ * Convert Vec4 to Vec3
+ */
+Vec3 convertVec3(Vec4 v);
+
+/*
+ * Perspective Division Function
+ */
+void perspectiveDivision(Vec4 &v);
 #endif

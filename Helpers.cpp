@@ -4,6 +4,7 @@
 #include "Matrix4.h"
 #include "Vec3.h"
 #include "Vec4.h"
+#include "Color.h"
 
 using namespace std;
 
@@ -211,4 +212,29 @@ Vec4 multiplyMatrixWithVec4(Matrix4 m, Vec4 v)
     }
 
     return Vec4(values[0], values[1], values[2], values[3], v.colorId);
+}
+/*
+ * Convert Vec4 to Vec3
+ */
+Vec3 convertVec3(Vec4 v)
+{
+    Vec3 result;
+    result.x = v.x;
+    result.y = v.y;
+    result.z = v.z;
+    result.colorId = v.colorId;
+
+    return result;
+}
+
+/*
+ * Perspective division
+ */
+void perspectiveDivision(Vec4 &v) {
+    v.x /= v.t;
+    v.y /= v.t;
+    v.z /= v.t;
+    v.t = 1;
+
+    return;
 }

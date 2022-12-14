@@ -104,7 +104,8 @@ bool isVisible(double den, double num, double &t_e, double &t_l) {
 			return false;
         else if (t > t_e) 
 			t_e = t;
-    } else if (den < 0) {
+    } 
+	else if (den < 0) {
         double t = num / den;
 
         if (t < t_e) 
@@ -112,16 +113,22 @@ bool isVisible(double den, double num, double &t_e, double &t_l) {
         else if (t < t_l) 
 			t_l = t;
     } 
+	else if(num > 0){
+		return false;
+	}
 
-	return num <= 0;
+	return true;
 }
 
 //Liang-Barsky Algorithm
-bool clipping(Vec3 vec0, Vec3 vec1){
+bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
 	//double d_x = vec1.x - vec0.x, d_y = vec1.y-vec0.y, d_z = vec1.z-vec0.z;
 	//double x_min = -1, y_min = -1, z_min = -1;
 	//double x_max = 1, y_max = 1, z_max = 1;
-
+	Color color_vec0 = *colorsOfVertices[vec0.colorId-1];
+	Color color_vec1 = *colorsOfVertices[vec1.colorId-1];
+	Color color_diff = subtractColor(color_vec1, color_vec0);
+	
 	Vec3 d = subtractVec3(vec1, vec0);
 	Vec3 minVec(-1., -1., -1., -1.);
 	Vec3 maxVec(1., 1., 1., -1.);
@@ -137,32 +144,26 @@ bool clipping(Vec3 vec0, Vec3 vec1){
     					if (isVisible(-d.z, vec0.z - maxVec.z, t_e, t_l)) {//back
         					visible = true;
 							if(t_l < 1){
-								vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l) );
-								//vec1.x = vec0.x + d_x * t_l;
-								//vec1.y = vec0.y + d_y * t_l;
-								//vec1.z = vec0.z + d_z * t_l;
+								vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l));
+								color_vec1 = color_vec0 + multiplyColorWithScalar(color_diff, t_l)
 							}							
 							if(t_e > 0){
-								//vec0.x = vec0.x + d_x * t_l; 
-								//vec0.y = vec0.y + d_y * t_l;  Must be t_e??	
-								//vec0.z = vec0.z + d_z * t_l;
-
-								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
+								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e));
 
 							}
 						}
 		
-	return isVisible;
+	return visible;
 
 
 }
 
-bool backFaceCulling(Vec3& v1, Vec3& v2, Vec3& v3){
-	Vec3 v3_v1 = subtractVec3(v3, v1);
-	Vec3 v2_v1 = subtractVec3(v2, v1);
+bool backFaceCulling(Vec4 &v1, Vec4 &v2, Vec4 &v3){
+	Vec3 v3_v1 = subtractVec3(convertVec3(v3), convertVec3(v1));
+	Vec3 v2_v1 = subtractVec3(convertVec3(v2), convertVec3(v1));
 
 	Vec3 normal = normalizeVec3(crossProductVec3(v3_v1, v2_v1));
-	if(dotProductVec3(normal, normalizeVec3(v2)) < 0) 
+	if(dotProductVec3(normal, normalizeVec3(convertVec3(v2))) < 0) 
 		return true;
 	else 
 		return false;
@@ -264,6 +265,57 @@ Matrix4 Scene::getViewportMatrix(Camera *camera) {
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
 	// TODO: Implement this function.
+	Matrix4 Mfinal = Matrix4();
+	Matrix4 Mviewp = getViewportMatrix(camera);
+	Matrix4 Mcam = getCameraTransformation(camera);
+	if(camera->projectionType == 0){ //Orthographic
+		Matrix4 Morth = getOrtographicProjection(camera);
+		Mfinal = multiplyMatrixWithMatrix(Morth, Mcam);
+	}
+	else{//Perspective
+		Matrix4 Mpers = getPerspectiveProjection(camera);
+		Mfinal = multiplyMatrixWithMatrix(Mpers, Mcam);
+	}
+	for(auto &mesh: this->meshes){
+		Matrix4 Mtransform = multiplyMatrixWithMatrix(Mfinal, getModelingTransform(*mesh));
+		for(auto &triangle: mesh->triangles){
+			Vec3* v1 =this->vertices[triangle.getFirstVertexId()-1];
+			Vec3* v2 =this->vertices[triangle.getSecondVertexId()-1];
+			Vec3* v3 =this->vertices[triangle.getThirdVertexId()-1];
+
+			Vec4 vertex1 = multiplyMatrixWithVec4(Mtransform, Vec4(v1->x, v1->y, v1->z, 1, v1->colorId));
+			Vec4 vertex2 = multiplyMatrixWithVec4(Mtransform, Vec4(v2->x, v2->y, v2->z, 1, v2->colorId));
+			Vec4 vertex3 = multiplyMatrixWithVec4(Mtransform, Vec4(v3->x, v3->y, v3->z, 1, v3->colorId));
+
+			if(cullingEnabled = 1 && !backFaceCulling(vertex1, vertex2, vertex3))
+				continue;
+			//Perspective division
+
+			perspectiveDivision(vertex1);
+			perspectiveDivision(vertex2);
+			perspectiveDivision(vertex3);
+
+			//Viewport Transformation
+			vertex1 = multiplyMatrixWithVec4(Mviewp, vertex1);
+			vertex2 = multiplyMatrixWithVec4(Mviewp, vertex2);
+			vertex3 = multiplyMatrixWithVec4(Mviewp, vertex3);
+
+			//wireframe
+			if(!mesh->type){
+
+				if(clipping())
+					//raster				
+				if(clipping())
+					//raster
+				if(clipping())
+					//raster
+			} 
+
+			else
+				//rastertri
+
+		}
+	}
 }
 
 /*

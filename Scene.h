@@ -49,6 +49,7 @@ public:
 	Matrix4 getOrtographicProjection(Camera *camera);
 	Matrix4 getPerspectiveProjection(Camera *camera);
 	Matrix4 getViewportMatrix(Camera *camera);
+	bool Scene::clipping(Vec3 &vec0, Vec3 &vec1);
 };
 
 #endif

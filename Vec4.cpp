@@ -57,13 +57,3 @@ ostream& operator<<(ostream& os, const Vec4& v) {
 
     return os;
 }
-
-// Perspective Division
-void Vec4::perspectiveDivision(Vec4 &v) {
-    v.x /= v.t;
-    v.y /= v.t;
-    v.z /= v.t;
-    v.t = 1;
-
-    return;
-}
