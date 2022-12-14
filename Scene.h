@@ -49,6 +49,7 @@ public:
 	Matrix4 getOrtographicProjection(Camera *camera);
 	Matrix4 getPerspectiveProjection(Camera *camera);
 	Matrix4 getViewportMatrix(Camera *camera);
+	void Scene::midpoint(Vec4 &v1, Vec4 &v2);
 };
 
 #endif

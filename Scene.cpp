@@ -21,6 +21,21 @@
 using namespace tinyxml2;
 using namespace std;
 
+//From Hw1
+int colorClamp(double &color){
+	if(color > 255)
+		return 255;
+	if(color < 0)
+		return 0;
+	return round(color + 0.5);
+}
+
+Color colorClamp(Color &color){
+	return Color(colorClamp(color.r), 
+					colorClamp(color.r), 
+					colorClamp(color.r));
+}
+
 Matrix4 Scene::getTranslationMatrix(Translation * t) {
 	double ret[4][4] =  {{1.,0.,0.,t->tx},
 						 {0.,1.,0.,t->ty},
@@ -148,11 +163,9 @@ bool clipping(Vec3 vec0, Vec3 vec1){
 								//vec0.z = vec0.z + d_z * t_l;
 
 								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
-
 							}
 						}
-		
-	return isVisible;
+	return visible;
 
 
 }
@@ -247,6 +260,102 @@ Matrix4 Scene::getViewportMatrix(Camera *camera) {
 
     return Matrix4(res);
 }
+
+
+/*
+FROM THE RASTERIZATION SLIDES ON ODTUCLASS
+y = y0
+d = (y0 – y1) + 0.5(x1 – x0)
+c = c0
+dc = (c1 – c0) / (x1 – x0) // skip α; directly compute color increment
+for x = x0 to x1 do:
+	draw(x, y, round(c))
+	if d < 0 then: // choose NE
+		y = y + 1
+		d += (y0 – y1) + (x1 – x0)
+	else: // choose E
+		d += (y0 – y1)
+		c += dc
+*/
+void Scene::midpoint(Vec4 &v1, Vec4 &v2)
+{
+	// Calculate the difference between the x and y coordinates of the two endpoints
+	int dx = v2.x - v1.x;
+	int dy = v2.y - v1.y;
+	// Initialize the error value and the increments used to update it
+	int error = 2 * dy - dx;
+	int incrementEast = 2 * dy;
+	int incrementNortheast = 2 * (dy - dx);
+
+	// Get the colors of the two endpoints and the color difference between them
+	Color startColor = *colorsOfVertices[v1.colorId-1];
+	Color endColor = *colorsOfVertices[v2.colorId-1];
+	Color colorDifference = (endColor - startColor) / dx;
+
+	// Set the starting position to the coordinates of the first endpoint
+	int x = v1.x, y = v1.y;
+
+	// Set the starting color to the color of the first endpoint
+	Color currentColor = startColor;
+
+	// Plot the first point of the line with the starting color
+	image[x][y] = colorClamp(currentColor);
+
+	// Move along the line depending on the slope
+	if (dy <= dx)
+	{
+		// If the slope is less than or equal to 1, move along the x-axis
+		while (x < v2.x)
+		{
+			// If the error value is negative, move to the east pixel
+			if (error <= 0)
+			{
+				error += incrementEast;
+				x++;
+			}
+			// If the error value is positive, move to the northeast pixel
+			else
+			{
+				error += incrementNortheast;
+				x++;
+				y++;
+			}
+
+			// Update the current color by adding the color difference
+			currentColor = currentColor + colorDifference;
+
+			// Clamp the color to valid values and plot it at the current position
+			image[x][y] = colorClamp(currentColor);
+		}
+	}
+	else
+	{
+		// If the slope is greater than 1, move along the y-axis
+		while (y < v2.y)
+		{
+			// If the error value is negative, move to the north pixel
+			if (error <= 0)
+			{
+				error += incrementEast;
+				y++;
+			}
+			// If the error value is positive, move to the northeast pixel
+			else
+			{
+				error += incrementNortheast;
+				y++;
+				x++;
+			}
+
+			// Update the current color by adding the color difference
+			currentColor = currentColor + colorDifference;
+
+			// Clamp the color to valid values and plot it at the current position
+			image[x][y] = colorClamp(currentColor);
+		}
+	}
+}
+
 
 
 
@@ -582,6 +691,6 @@ void Scene::convertPPMToPNG(string ppmFileName, int osType)
 
 	// default action - don't do conversion
 	else
-	{
+	{}
 
 }
