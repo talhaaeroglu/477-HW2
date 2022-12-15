@@ -51,6 +51,7 @@ public:
 	Matrix4 getViewportMatrix(Camera *camera);
 	void Scene::midpoint(Vec4 &v1, Vec4 &v2);
 	bool Scene::clipping(Vec3 &vec0, Vec3 &vec1);
+	void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
 };
 
 #endif

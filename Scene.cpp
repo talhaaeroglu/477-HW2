@@ -152,25 +152,23 @@ bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
 	bool visible = false;
 
 	if (isVisible(d.x, minVec.x - vec0.x, t_e, t_l))  //left
-    	if (isVisible(-d.x, vec0.x - maxVec.x, t_e, t_l)) //right
-    		if (isVisible(d.y, minVec.y - vec0.y, t_e, t_l)) //bottom
-    			if (isVisible(-d.y, vec0.y - maxVec.y, t_e, t_l)) //top
-    				if (isVisible(d.z, minVec.z - vec0.z, t_e, t_l)) //front
-    					if (isVisible(-d.z, vec0.z - maxVec.z, t_e, t_l)) {//back
-        					visible = true;
-							if(t_l < 1){
-								vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l));
-								color_vec1 = color_vec0 + color_diff * t_l;
-							}							
-							if(t_e > 0){
-								vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
-								color_vec0 = color_vec1 + color_diff * t_e;
-							}
-						}
+    if (isVisible(-d.x, vec0.x - maxVec.x, t_e, t_l)) //right
+    if (isVisible(d.y, minVec.y - vec0.y, t_e, t_l)) //bottom
+    if (isVisible(-d.y, vec0.y - maxVec.y, t_e, t_l)) //top
+    if (isVisible(d.z, minVec.z - vec0.z, t_e, t_l)) //front
+    if (isVisible(-d.z, vec0.z - maxVec.z, t_e, t_l)) {//back
+		visible = true;
+		if(t_l < 1){
+			vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l));
+			color_vec1 = color_vec0 + color_diff * t_l;
+		}							
+		if(t_e > 0){
+			vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
+			color_vec0 = color_vec1 + color_diff * t_e;
+		}
+	}
 
 	return visible;
-
-
 }
 
 bool backFaceCulling(Vec4 &v1, Vec4 &v2, Vec4 &v3){
@@ -370,8 +368,42 @@ void Scene::midpoint(Vec4 &v1, Vec4 &v2)
 	}
 }
 
+void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
+{
+    // Compute the bounding box of the triangle
+    int xmin = std::min({v0.x, v1.x, v2.x});
+    int ymin = std::min({v0.y, v1.y, v2.y});
+    int xmax = std::max({v0.x, v1.x, v2.x});
+    int ymax = std::max({v0.y, v1.y, v2.y});
 
+    // Get the colors of the vertices
+    Color c0(*colorsOfVertices[v0.colorId - 1]);
+    Color c1(*colorsOfVertices[v1.colorId - 1]);
+    Color c2(*colorsOfVertices[v2.colorId - 1]);
 
+    // Iterate over the bounding box and draw the triangle
+    for (int i = xmin; i < xmax; i++)
+    {
+        for (int j = ymin; j < ymax; j++)
+        {
+            // Compute the barycentric coordinates of the current point
+            double a = line(i, j, v1.x, v1.y, v2.x, v2.y) / line(v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
+            double b = line(i, j, v2.x, v2.y, v0.x ,v0.y) / line(v1.x, v1.y, v2.x, v2.y, v0.x, v0.y);
+            double c = line(i, j, v0.x, v0.y, v1.x, v1.y) / line(v2.x, v2.y, v0.x, v0.y, v1.x, v1.y);
+
+            // Check if the current point is inside the triangle
+            if ((a >= 0) && (b >= 0) && (c >= 0) &&
+                i >= 0 && j >= 0 &&
+                i < nx && j < ny)
+            {
+                // Compute the color of the current point
+                Color color = c0 * a + c1 * b + c2 * c;
+                colorClamp(color);
+                image[i][j] = color;
+            }
+        }
+    }
+}
 
 void Scene::forwardRenderingPipeline(Camera *camera)
 {
@@ -422,6 +454,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 				// 	//raster
 			} 
 
+			//solid
 			else{
 				
 			}
@@ -429,6 +462,10 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 
 		}
 	}
+}
+
+double line(double xp, double yp, double x1, double y1, double x2, double y2){
+    return xp * (y1 - y2) + yp * (x2 - x1) + (x1 * y2) - (y1 * x2);
 }
 
 /*
