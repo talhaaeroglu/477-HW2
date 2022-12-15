@@ -428,7 +428,7 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			Vec4 vertex2 = multiplyMatrixWithVec4(Mtransform, Vec4(v2->x, v2->y, v2->z, 1, v2->colorId));
 			Vec4 vertex3 = multiplyMatrixWithVec4(Mtransform, Vec4(v3->x, v3->y, v3->z, 1, v3->colorId));
 
-			if(cullingEnabled = 1 && !backFaceCulling(vertex1, vertex2, vertex3))
+			if(cullingEnabled == 1 && !backFaceCulling(vertex1, vertex2, vertex3))
 				continue;
 			//Perspective division
 
@@ -467,16 +467,15 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 				}
 
 			} 
-
 			//solid
 			else{
-				//rastertri
+				rasterTriangle(vertex1, vertex2, vertex3, camera->horRes, camera->verRes);
 			}
 		}
 	}
 }
 
-double line(double xp, double yp, double x1, double y1, double x2, double y2){
+double Scene::line(double xp, double yp, double x1, double y1, double x2, double y2){
     return xp * (y1 - y2) + yp * (x2 - x1) + (x1 * y2) - (y1 * x2);
 }
 

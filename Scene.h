@@ -17,6 +17,7 @@
 #include "Triangle.h"
 #include "Vec3.h"
 #include "Vec4.h"
+#include "Matrix4.h"
 
 using namespace std;
 
@@ -49,9 +50,10 @@ public:
 	Matrix4 getOrtographicProjection(Camera *camera);
 	Matrix4 getPerspectiveProjection(Camera *camera);
 	Matrix4 getViewportMatrix(Camera *camera);
-	void Scene::midpoint(Vec4 &v1, Vec4 &v2);
-	bool Scene::clipping(Vec3 &vec0, Vec3 &vec1);
-	void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
+	void midpoint(Vec4 &v1, Vec4 &v2);
+	bool clipping(Vec3 &vec0, Vec3 &vec1);
+	void rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
+	double line(double xp, double yp, double x1, double y1, double x2, double y2);
 };
 
 #endif
