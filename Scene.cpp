@@ -407,6 +407,7 @@ void Scene::midpoint2(Vec4 &vec1, Vec4 &vec2){
 void Scene::triangleRasterizer(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
 {
     // Compute the bounding box of the triangle
+	// Adjust max and min values so,  0 <= values <= camera->HorRes, Camera->verRes
     double xminTemp = std::min({v0.x, v1.x, v2.x}) >= 0 ? std::min({v0.x, v1.x, v2.x}) : 0;
     double yminTemp = std::min({v0.y, v1.y, v2.y}) >= 0 ? std::min({v0.y, v1.y, v2.y}) : 0;
     double xmaxTemp = std::max({v0.x, v1.x, v2.x}) >= 0 ? std::max({v0.x, v1.x, v2.x}) : 0;
