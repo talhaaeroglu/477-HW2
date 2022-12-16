@@ -32,8 +32,8 @@ int colorClamp(double &color){
 
 Color colorClamp(Color &color){
 	return Color(colorClamp(color.r), 
-					colorClamp(color.r), 
-					colorClamp(color.r));
+					colorClamp(color.g), 
+					colorClamp(color.b));
 }
 
 Matrix4 Scene::getTranslationMatrix(Translation * t) {
@@ -369,10 +369,10 @@ void Scene::midpoint(Vec4 &v1, Vec4 &v2)
 void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
 {
     // Compute the bounding box of the triangle
-    int xmin = std::min({v0.x, v1.x, v2.x});
-    int ymin = std::min({v0.y, v1.y, v2.y});
-    int xmax = std::max({v0.x, v1.x, v2.x});
-    int ymax = std::max({v0.y, v1.y, v2.y});
+    double xmin = std::min({v0.x, v1.x, v2.x});
+    double ymin = std::min({v0.y, v1.y, v2.y});
+    double xmax = std::max({v0.x, v1.x, v2.x});
+    double ymax = std::max({v0.y, v1.y, v2.y});
 
     // Get the colors of the vertices
     Color c0(*colorsOfVertices[v0.colorId - 1]);
@@ -396,8 +396,7 @@ void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
             {
                 // Compute the color of the current point
                 Color color = c0 * a + c1 * b + c2 * c;
-                colorClamp(color);
-                image[i][j] = color;
+                image[i][j] = colorClamp(color);
             }
         }
     }
