@@ -51,7 +51,7 @@ public:
 	Matrix4 getPerspectiveProjection(Camera *camera);
 	Matrix4 getViewportMatrix(Camera *camera);
 	void midpoint(Vec4 &v1, Vec4 &v2);
-	bool clipping(Vec3 &vec0, Vec3 &vec1);
+	bool clipping(Vec4 &vec0, Vec4 &vec1, int nx, int ny);
 	void rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
 	double line(double xp, double yp, double x1, double y1, double x2, double y2);
 };

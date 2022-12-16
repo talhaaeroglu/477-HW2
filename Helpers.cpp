@@ -238,3 +238,43 @@ void perspectiveDivision(Vec4 &v) {
 
     return;
 }
+
+/*
+ * Subtract vec4 b from vec4 a and return resulting vec4 (a-b).
+ */
+Vec4 subtractVec4(Vec4 a, Vec4 b)
+{
+    Vec4 result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    result.t = 1;
+
+    return result;
+}
+
+/*
+ * Add vec4 a to vec4 b and return resulting vec4 (a+b).
+ */
+Vec4 addVec4(Vec4 a, Vec4 b){
+    Vec4 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.t = 1;
+
+    return result;
+}
+
+/*
+ * Multiply each element of vec4 with scalar.
+ */
+Vec4 multiplyVec4WithScalar(Vec4 v, double c)
+{
+    Vec4 result;
+    result.x = v.x * c;
+    result.y = v.y * c;
+    result.z = v.z * c;
+
+    return result;
+}

@@ -136,15 +136,17 @@ bool isVisible(double den, double num, double &t_e, double &t_l) {
 }
 
 //Liang-Barsky Algorithm
-bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
+//Liang-Barsky Algorithm
+bool Scene::clipping(Vec4 &vec0, Vec4 &vec1, int nx, int ny){
 
 	Color color_vec0 = *colorsOfVertices[vec0.colorId-1];
 	Color color_vec1 = *colorsOfVertices[vec1.colorId-1];
-	Color color_diff = color_vec1- color_vec0;
+
 	
-	Vec3 d = subtractVec3(vec1, vec0);
-	Vec3 minVec(-1., -1., -1., -1.);
-	Vec3 maxVec(1., 1., 1., -1.);
+	Vec4 d = subtractVec4(vec1, vec0);
+	Color color_diff = (color_vec1- color_vec0)/d.x;
+	Vec3 minVec(-0.5, -0.5, 0, -1.);
+	Vec3 maxVec(nx-0.5, ny-0.5, 1., -1.);
 	double t_e = 0, t_l = 1;
 
 	bool visible = false;
@@ -157,11 +159,11 @@ bool Scene::clipping(Vec3 &vec0, Vec3 &vec1){
     if (isVisible(-d.z, vec0.z - maxVec.z, t_e, t_l)) {//back
 		visible = true;
 		if(t_l < 1){
-			vec1 = addVec3(vec0, multiplyVec3WithScalar(d, t_l));
+			vec1 = addVec4(vec0, multiplyVec4WithScalar(d, t_l));
 			color_vec1 = color_vec0 + color_diff * t_l;
 		}							
 		if(t_e > 0){
-			vec0 = addVec3(vec0, multiplyVec3WithScalar(d, t_e) );
+			vec0 = addVec4(vec0, multiplyVec4WithScalar(d, t_e) );
 			color_vec0 = color_vec1 + color_diff * t_e;
 		}
 	}
@@ -443,28 +445,16 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			//wireframe
 			if(!mesh->type){
 
-				Vec3 vertex11 = convertVec3(vertex1), vertex111 = convertVec3(vertex1);
-				Vec3 vertex22 = convertVec3(vertex2), vertex222 = convertVec3(vertex1);
-				Vec3 vertex33 = convertVec3(vertex3), vertex333 = convertVec3(vertex3);
+				Vec4 v1 = Vec4(vertex1);
+				Vec4 v2 = Vec4(vertex2);
+				Vec4 v3 = Vec4(vertex3);
 
-				if(clipping(vertex11, vertex22)){
-					Vec4 ver1(vertex11.x, vertex11.y, vertex11.z, 1, vertex11.colorId);
-					Vec4 ver2(vertex22.x, vertex22.y, vertex22.z, 1, vertex22.colorId);
-					midpoint(ver1, ver2);
-				}
-					//raster				
-				if(clipping(vertex111, vertex33)){
-					Vec4 ver11(vertex111.x, vertex111.y, vertex111.z, 1, vertex111.colorId);
-					Vec4 ver3(vertex33.x, vertex33.y, vertex33.z, 1, vertex33.colorId);
-					midpoint(ver11, ver3);
-				}
-					
-				if(clipping(vertex222, vertex333)){
-					Vec4 ver22(vertex222.x, vertex222.y, vertex222.z, 1, vertex222.colorId);
-					Vec4 ver33(vertex333.x, vertex333.y, vertex333.z, 1, vertex333.colorId);
-					midpoint(ver22, ver33);
-				}
-
+				if(clipping(vertex1,v2,camera->horRes, camera->verRes))
+					midpoint(vertex1,v2);
+				if(clipping(vertex2,v3,camera->horRes, camera->verRes))
+					midpoint(vertex2,v3);
+				if(clipping(vertex3,v1,camera->horRes, camera->verRes))
+					midpoint(vertex3,v1);
 			} 
 			//solid
 			else{

@@ -84,4 +84,20 @@ Vec3 convertVec3(Vec4 v);
  * Perspective Division Function
  */
 void perspectiveDivision(Vec4 &v);
+
+/*
+ * Subtract vec4 b from vec4 a and return resulting vec4 (a-b).
+ */
+Vec4 subtractVec4(Vec4 a, Vec4 b);
+
+/*
+ * Add vec4 a to vec4 b and return resulting vec4 (a+b).
+ */
+Vec4 addVec4(Vec4 a, Vec4 b);
+
+/*
+ * Multiply each element of vec4 with scalar.
+ */
+Vec4 multiplyVec4WithScalar(Vec4 v, double c);
+
 #endif
