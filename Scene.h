@@ -50,10 +50,12 @@ public:
 	Matrix4 getOrtographicProjection(Camera *camera);
 	Matrix4 getPerspectiveProjection(Camera *camera);
 	Matrix4 getViewportMatrix(Camera *camera);
-	void midpoint(Vec4 &v1, Vec4 &v2);
-	bool clipping(Vec4 &vec0, Vec4 &vec1, int nx, int ny);
-	void rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
-	double line(double xp, double yp, double x1, double y1, double x2, double y2);
+	void lineRasterizer(Vec4 &vec1, Vec4 &vec2);
+	void midpoint1(Vec4 &vec1, Vec4 &vec2);
+	void midpoint2(Vec4 &vec1, Vec4 &vec2);
+	bool clipping(Vec4 &vec1, Vec4 &vec2, int nx, int ny);
+	void triangleRasterizer(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny);
+	double lineEquation(double xp, double yp, double x1, double y1, double x2, double y2);
 };
 
 #endif

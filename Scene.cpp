@@ -21,6 +21,11 @@
 using namespace tinyxml2;
 using namespace std;
 
+/*
+	Transformations, clipping, culling, rasterization are done here.
+	You may define helper functions.
+*/
+
 //From Hw1
 int colorClamp(double &color){
 	if(color > 255)
@@ -136,13 +141,11 @@ bool isVisible(double den, double num, double &t_e, double &t_l) {
 }
 
 //Liang-Barsky Algorithm
-//Liang-Barsky Algorithm
 bool Scene::clipping(Vec4 &vec0, Vec4 &vec1, int nx, int ny){
 
 	Color color_vec0 = *colorsOfVertices[vec0.colorId-1];
 	Color color_vec1 = *colorsOfVertices[vec1.colorId-1];
 
-	
 	Vec4 d = subtractVec4(vec1, vec0);
 	Color color_diff = (color_vec1- color_vec0)/d.x;
 	Vec3 minVec(-0.5, -0.5, 0, -1.);
@@ -183,10 +186,6 @@ bool backFaceCulling(Vec4 &v1, Vec4 &v2, Vec4 &v3){
 
 }
 
-/*
-	Transformations, clipping, culling, rasterization are done here.
-	You may define helper functions.
-*/
 
 Matrix4 Scene::getModelingTransform(Mesh & mesh){
     // Initialize the modeling transformation to the identity matrix
@@ -289,92 +288,135 @@ for x = x0 to x1 do:
 		d += (y0 – y1)
 		c += dc
 */
-void Scene::midpoint(Vec4 &v1, Vec4 &v2)
+
+// Modify midpoint algorithms according to slope
+void Scene::lineRasterizer(Vec4 &vec1, Vec4 &vec2)
 {
-	// Calculate the difference between the x and y coordinates of the two endpoints
-	int dx = v2.x - v1.x;
-	int dy = v2.y - v1.y;
-	// Initialize the error value and the increments used to update it
-	int error = 2 * dy - dx;
-	int incrementEast = 2 * dy;
-	int incrementNortheast = 2 * (dy - dx);
+    double dx = vec2.x - vec1.x;
+    double dy = vec2.y - vec1.y;
 
-	// Get the colors of the two endpoints and the color difference between them
-	Color startColor = *colorsOfVertices[v1.colorId-1];
-	Color endColor = *colorsOfVertices[v2.colorId-1];
-	Color colorDifference = (endColor - startColor) / dx;
+	// -1 < slope < 1 
+    if (abs(dy) <= abs(dx)) {
 
-	// Set the starting position to the coordinates of the first endpoint
-	int x = v1.x, y = v1.y;
-
-	// Set the starting color to the color of the first endpoint
-	Color currentColor = startColor;
-
-	// Plot the first point of the line with the starting color
-	image[x][y] = colorClamp(currentColor);
-
-	// Move along the line depending on the slope
-	if (dy <= dx)
-	{
-		// If the slope is less than or equal to 1, move along the x-axis
-		while (x < v2.x)
-		{
-			// If the error value is negative, move to the east pixel
-			if (error <= 0)
-			{
-				error += incrementEast;
-				x++;
-			}
-			// If the error value is positive, move to the northeast pixel
-			else
-			{
-				error += incrementNortheast;
-				x++;
-				y++;
-			}
-
-			// Update the current color by adding the color difference
-			currentColor = currentColor + colorDifference;
-
-			// Clamp the color to valid values and plot it at the current position
-			image[x][y] = colorClamp(currentColor);
+		// -1 < slope < 0 
+        if (vec2.x < vec1.x) {
+			midpoint1(vec2, vec1);
+        }
+		// 0 < slope < 1 
+		else{
+			midpoint1(vec1,vec2);
 		}
-	}
-	else
-	{
-		// If the slope is greater than 1, move along the y-axis
-		while (y < v2.y)
-		{
-			// If the error value is negative, move to the north pixel
-			if (error <= 0)
-			{
-				error += incrementEast;
-				y++;
-			}
-			// If the error value is positive, move to the northeast pixel
-			else
-			{
-				error += incrementNortheast;
-				y++;
-				x++;
-			}
-
-			// Update the current color by adding the color difference
-			currentColor = currentColor + colorDifference;
-
-			// Clamp the color to valid values and plot it at the current position
-			image[x][y] = colorClamp(currentColor);
+    }
+	// (-inf < slope < -1)  U  (1 < slope < +inf)
+    else if (abs(dy) > abs(dx)) {
+		// -inf < slope < -1 
+        if (vec2.y < vec1.y) {
+            midpoint2(vec2, vec1);
+        }
+		// 1 < slope < +inf
+		else{
+			midpoint2(vec1, vec2);
 		}
+    }
+}
+void Scene::midpoint1(Vec4 &vec1, Vec4 &vec2 ){
+	Color c, c1, c2, dc;
+	c1 = *colorsOfVertices[vec1.colorId-1];
+	c2 = *colorsOfVertices[vec2.colorId-1];
+	c = c1;
+	double d;
+	int y = vec1.y;
+
+	if(vec2.y<vec1.y){       
+        d = (vec1.y - vec2.y) + ( -0.5 * (vec2.x - vec1.x));
+        dc = (c2 - c1) / (vec2.x - vec1.x);
+        for (int x = vec1.x; x <= vec2.x; x++) {
+            image[x][y] = colorClamp(c);
+           // choose NE
+		   if (d > 0){ 
+                y--;
+                d += (vec1.y - vec2.y) - (vec2.x - vec1.x);
+            }
+			// choose E
+            else{
+                d += (vec1.y - vec2.y);
+			} 
+            c = c + dc;
+        }
 	}
+	else{
+        d = (vec1.y - vec2.y) + ( 0.5 * (vec2.x - vec1.x));
+        dc = (c2 - c1) / (vec2.x - vec1.x);
+        for (int x = vec1.x; x <= vec2.x; x++) {
+            image[x][y] = colorClamp(c);
+            // choose NE
+			if (d < 0){ 
+                y ++;
+                d += (vec1.y - vec2.y) + (vec2.x - vec1.x);
+            }
+			// choose E
+            else{
+ 				d += (vec1.y - vec2.y);
+			}      
+            c = c + dc;
+        }
+	}
+
+}
+void Scene::midpoint2(Vec4 &vec1, Vec4 &vec2){
+		Color c, c1, c2, dc;
+		c1 = *colorsOfVertices[vec1.colorId-1];
+		c2 = *colorsOfVertices[vec2.colorId-1];
+		c = c1;
+		double d;
+        int x = vec1.x;
+
+		if (vec2.x < vec1.x) {
+			d = (vec2.x - vec1.x) + (-0.5 * (vec1.y - vec2.y));
+			dc = (c2 - c1) / (vec2.y - vec1.y);
+			for (int y = vec1.y; y <= vec2.y; y++) {
+				image[x][y] = colorClamp(c);
+				if (d < 0){
+					x --;
+					d += (vec2.x - vec1.x) - (vec1.y - vec2.y);
+				}
+				else{
+					d += (vec2.x - vec1.x);
+				}	
+				c = c + dc;
+			}
+        }
+		else{
+			d = (vec2.x - vec1.x) + (0.5 * (vec1.y - vec2.y));
+			dc = (c2 - c1) / (vec2.y - vec1.y);
+			for (int y = vec1.y; y <= vec2.y; y++) {
+				image[x][y] = colorClamp(c);
+				if (d > 0){
+					x ++;
+					d += (vec2.x - vec1.x) + (vec1.y - vec2.y);
+				}
+				else{
+					d += (vec2.x - vec1.x);
+				}
+				c = c + dc;
+			}
+		}
+
 }
 
-void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
+void Scene::triangleRasterizer(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
 {
     // Compute the bounding box of the triangle
-    double xmin = std::min({v0.x, v1.x, v2.x});
-    double ymin = std::min({v0.y, v1.y, v2.y});
-    double xmax = std::max({v0.x, v1.x, v2.x});
-    double ymax = std::max({v0.y, v1.y, v2.y});
+    double xminTemp = std::min({v0.x, v1.x, v2.x}) >= 0 ? std::min({v0.x, v1.x, v2.x}) : 0;
+    double yminTemp = std::min({v0.y, v1.y, v2.y}) >= 0 ? std::min({v0.y, v1.y, v2.y}) : 0;
+    double xmaxTemp = std::max({v0.x, v1.x, v2.x}) >= 0 ? std::max({v0.x, v1.x, v2.x}) : 0;
+    double ymaxTemp = std::max({v0.y, v1.y, v2.y}) >= 0 ? std::max({v0.y, v1.y, v2.y}) : 0;
+
+	double xmin = xminTemp > nx ? nx-1 : xminTemp;
+	double ymin = yminTemp > ny ? ny-1 : yminTemp;
+	double xmax = xmaxTemp > nx ? nx-1 : xmaxTemp;
+	double ymax = ymaxTemp > ny ? ny-1 : ymaxTemp;
+	 
 
     // Get the colors of the vertices
     Color c0(*colorsOfVertices[v0.colorId - 1]);
@@ -387,17 +429,15 @@ void Scene::rasterTriangle(Vec4 &v0, Vec4 &v1, Vec4 &v2, int nx, int ny)
         for (int j = ymin; j < ymax; j++)
         {
             // Compute the barycentric coordinates of the current point
-            double a = line(i, j, v1.x, v1.y, v2.x, v2.y) / line(v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
-            double b = line(i, j, v2.x, v2.y, v0.x ,v0.y) / line(v1.x, v1.y, v2.x, v2.y, v0.x, v0.y);
-            double c = line(i, j, v0.x, v0.y, v1.x, v1.y) / line(v2.x, v2.y, v0.x, v0.y, v1.x, v1.y);
+            double alpha = lineEquation(i, j, v1.x, v1.y, v2.x, v2.y) / lineEquation(v0.x, v0.y, v1.x, v1.y, v2.x, v2.y);
+            double beta = lineEquation(i, j, v2.x, v2.y, v0.x ,v0.y) / lineEquation(v1.x, v1.y, v2.x, v2.y, v0.x, v0.y);
+            double gamma = lineEquation(i, j, v0.x, v0.y, v1.x, v1.y) / lineEquation(v2.x, v2.y, v0.x, v0.y, v1.x, v1.y);
 
             // Check if the current point is inside the triangle
-            if ((a >= 0) && (b >= 0) && (c >= 0) &&
-                i >= 0 && j >= 0 &&
-                i < nx && j < ny)
+            if (alpha >= 0 && beta >= 0 && gamma >= 0)
             {
                 // Compute the color of the current point
-                Color color = c0 * a + c1 * b + c2 * c;
+                Color color =(c0 * alpha) + (c1 * beta) + (c2 * gamma);
                 image[i][j] = colorClamp(color);
             }
         }
@@ -429,8 +469,10 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			Vec4 vertex2 = multiplyMatrixWithVec4(Mtransform, Vec4(v2->x, v2->y, v2->z, 1, v2->colorId));
 			Vec4 vertex3 = multiplyMatrixWithVec4(Mtransform, Vec4(v3->x, v3->y, v3->z, 1, v3->colorId));
 
+			//Dont compute back-facing polygons
 			if(cullingEnabled == 1 && !backFaceCulling(vertex1, vertex2, vertex3))
 				continue;
+
 			//Perspective division
 
 			perspectiveDivision(vertex1);
@@ -445,26 +487,33 @@ void Scene::forwardRenderingPipeline(Camera *camera)
 			//wireframe
 			if(!mesh->type){
 
-				Vec4 v1 = Vec4(vertex1);
-				Vec4 v2 = Vec4(vertex2);
-				Vec4 v3 = Vec4(vertex3);
+				//Creating temp variables to pass unmodified versions of vertices to lineRasterizer.
+				Vec4 v1 = Vec4(vertex1); Vec4 v11 = Vec4(vertex1);
+				Vec4 v2 = Vec4(vertex2); Vec4 v22 = Vec4(vertex2);
+				Vec4 v3 = Vec4(vertex3); Vec4 v33 = Vec4(vertex3);
 
-				if(clipping(vertex1,v2,camera->horRes, camera->verRes))
-					midpoint(vertex1,v2);
-				if(clipping(vertex2,v3,camera->horRes, camera->verRes))
-					midpoint(vertex2,v3);
-				if(clipping(vertex3,v1,camera->horRes, camera->verRes))
-					midpoint(vertex3,v1);
+				if(clipping(v1,v2,camera->horRes, camera->verRes)){
+					lineRasterizer(v1,v2);
+				}
+					
+				if(clipping(v22,v3,camera->horRes, camera->verRes)){
+					lineRasterizer(v22,v3);
+				}
+					
+				if(clipping(v33,v11,camera->horRes, camera->verRes)){
+					lineRasterizer(v33,v11);
+				}
+					
 			} 
 			//solid
 			else{
-				rasterTriangle(vertex1, vertex2, vertex3, camera->horRes, camera->verRes);
+				triangleRasterizer(vertex1, vertex2, vertex3, camera->horRes, camera->verRes);
 			}
 		}
 	}
 }
 
-double Scene::line(double xp, double yp, double x1, double y1, double x2, double y2){
+double Scene::lineEquation(double xp, double yp, double x1, double y1, double x2, double y2){
     return xp * (y1 - y2) + yp * (x2 - x1) + (x1 * y2) - (y1 * x2);
 }
 
